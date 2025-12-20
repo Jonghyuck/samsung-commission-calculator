@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>삼성생명 수수료 계산시스템 - 양종혁 설계사</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        /* 헤더 */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        /* 메인 콘텐츠 */
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        .section {
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            background: #f9f9f9;
+        }
+
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 18px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        /* 입력 폼 */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #333;
+            font-size: 13px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        /* 계약 목록 */
+        .contracts-list {
+            max-height: 500px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: white;
+        }
+
+        .contract-item {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            transition: background-color 0.2s;
+        }
+
+        .contract-item:hover {
+            background-color: #f5f5f5;
+        }
+
+        .contract-info {
+            flex: 1;
+        }
+
+        .contract-title {
+            font-weight: 600;
+            color: #333;
+            font-size: 13px;
+            margin-bottom: 3px;
+        }
+
+        .contract-meta {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .contract-merit {
+            font-weight: 700;
+            color: #667eea;
+            font-size: 14px;
+            margin-right: 10px;
+            white-space: nowrap;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #e8e8e8;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #d8d8d8;
+        }
+
+        .btn-danger {
+            background: #ff6b6b;
+            color: white;
+            font-size: 12px;
+            padding: 6px 12px;
+            flex: none;
+        }
+
+        /* 결과 영역 */
+        .results {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .result-summary {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .result-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .result-card-label {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+
+        .result-card-value {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .result-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            margin-top: 15px;
+        }
+
+        .result-table th {
+            background: #f5f5f5;
+            padding: 10px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .result-table td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .result-table tr:hover {
+            background: #f9f9f9;
+        }
+
+        .amount {
+            text-align: right;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        /* 월별 비교 */
+        .monthly-comparison {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #eee;
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .comparison-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .comparison-month {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .comparison-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        /* HWP 문서 */
+        .hwp-document {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+            color: #333;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .copy-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            margin-top: 10px;
+        }
+
+        .copy-btn:hover {
+            background: #5568d3;
+        }
+
+        /* 푸터 */
+        .footer {
+            background: #f0f0f0;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+            border-top: 1px solid #ddd;
+        }
+
+        /* 반응형 */
+        @media (max-width: 1024px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+
+            .result-summary {
+                grid-template-columns: 1fr;
+            }
+
+            .comparison-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* 탭 */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* 배지 */
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 5px;
+        }
+
+        .badge-8 {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .badge-9 {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .badge-10 {
+            background: #e8f5e9;
+            color: #388e3c;
+        }
+
+        .success-message {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 12px;
+            border-radius: 4px;
+            color: #2e7d32;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 헤더 -->
+        <div class="header">
+            <h1>삼성생명 수수료 계산시스템</h1>
+            <p>양종혁 설계사 | 2025년 8월~10월 신계약 현황 기반</p>
+        </div>
+
+        <!-- 메인 콘텐츠 -->
+        <div class="content">
+            <!-- 왼쪽: 입력 영역 -->
+            <div>
+                <div class="section">
+                    <h2>📋 월별 정보</h2>
+
+                    <div class="form-group">
+                        <label>활동 월 *</label>
+                        <select id="month" onchange="updateMonthInfo()">
+                            <option value="8">2025년 8월</option>
+                            <option value="9">2025년 9월</option>
+                            <option value="10" selected>2025년 10월</option>
+                            <option value="11">2025년 11월</option>
+                            <option value="12">2025년 12월</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>차월 *</label>
+                        <select id="quarter">
+                            <option value="1">1차월</option>
+                            <option value="2">2차월</option>
+                            <option value="3" selected>3차월</option>
+                            <option value="4">4차월</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>설계사명</label>
+                        <input type="text" id="agentName" value="양종혁" readonly>
+                    </div>
+
+                    <div class="form-group">
+                        <label>소속</label>
+                        <input type="text" id="branch" value="강남법인지역단 관훈법인지점 01팀" readonly>
+                    </div>
+                </div>
+
+                <!-- 신계약 추가 -->
+                <div class="section" style="margin-top: 20px;">
+                    <h2>➕ 신계약 추가</h2>
+
+                    <div class="form-group">
+                        <label>상품명 *</label>
+                        <select id="productSelect">
+                            <option value="">-- 상품선택 --</option>
+                            <option value="삼성 The퍼스트건강보험">삼성 The퍼스트건강보험</option>
+                            <option value="삼성 간편 웰에이징 건강보험">삼성 간편 웰에이징</option>
+                            <option value="삼성 경증간편 플러스원 건강보험">삼성 경증간편 플러스원</option>
+                            <option value="삼성 플러스원 건강보험">삼성 플러스원 건강보험</option>
+                            <option value="삼성 더행복종신보험">삼성 더행복종신보험</option>
+                            <option value="기타상품">기타상품</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>증권번호</label>
+                        <input type="text" id="certNo" placeholder="00041000020469059">
+                    </div>
+
+                    <div class="form-group">
+                        <label>청약일자</label>
+                        <input type="date" id="subscriptionDate">
+                    </div>
+
+                    <div class="form-group">
+                        <label>계약자명</label>
+                        <input type="text" id="customer" placeholder="계약자명">
+                    </div>
+
+                    <div class="form-group">
+                        <label>월초보험료</label>
+                        <input type="number" id="monthlyPremium" placeholder="250000">
+                    </div>
+
+                    <div class="form-group">
+                        <label>환산성적</label>
+                        <input type="number" id="conversionMerit" placeholder="350000">
+                    </div>
+
+                    <div class="form-group">
+                        <label>상품구분</label>
+                        <select id="productType">
+                            <option value="건강상해">건강상해</option>
+                            <option value="종신/GI">종신/GI</option>
+                            <option value="변액보험">변액보험</option>
+                            <option value="기타">기타</option>
+                        </select>
+                    </div>
+
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="addContract()">계약 추가</button>
+                        <button class="btn btn-secondary" onclick="clearForm()">초기화</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 오른쪽: 결과 영역 -->
+            <div>
+                <div class="section">
+                    <h2>📊 신계약 목록</h2>
+                    <div class="contracts-list" id="contractsList">
+                        <!-- 계약 목록이 여기에 표시됨 -->
+                    </div>
+                </div>
+
+                <div class="results" style="margin-top: 20px;">
+                    <h2 style="color: #667eea; margin-bottom: 20px;">💰 수수료 계산 결과</h2>
+
+                    <div class="result-summary">
+                        <div class="result-card">
+                            <div class="result-card-label">유효성적</div>
+                            <div class="result-card-value" id="totalMerit">0원</div>
+                        </div>
+                        <div class="result-card">
+                            <div class="result-card-label">총수수료</div>
+                            <div class="result-card-value" id="totalCommission">0원</div>
+                        </div>
+                        <div class="result-card">
+                            <div class="result-card-label">최종 지급액</div>
+                            <div class="result-card-value" id="finalPayment">0원</div>
+                        </div>
+                    </div>
+
+                    <table class="result-table">
+                        <thead>
+                            <tr>
+                                <th>항목</th>
+                                <th class="amount">금액</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>기본수수료</td>
+                                <td class="amount" id="basicCommission">0원</td>
+                            </tr>
+                            <tr>
+                                <td>정착수수료</td>
+                                <td class="amount" id="settlementFee">0원</td>
+                            </tr>
+                            <tr>
+                                <td>신인유지보너스</td>
+                                <td class="amount" id="maintenanceBonus">0원</td>
+                            </tr>
+                            <tr style="background: #f5f5f5;">
+                                <td><strong>신인수수료계</strong></td>
+                                <td class="amount"><strong id="newbieTotal">0원</strong></td>
+                            </tr>
+                            <tr style="background: #fff3cd;">
+                                <td><strong>소계</strong></td>
+                                <td class="amount"><strong id="subtotal">0원</strong></td>
+                            </tr>
+                            <tr>
+                                <td>소득세(9%)</td>
+                                <td class="amount" id="incomeTax">0원</td>
+                            </tr>
+                            <tr>
+                                <td>지방소득세(1%)</td>
+                                <td class="amount" id="localTax">0원</td>
+                            </tr>
+                            <tr style="background: #e3f2fd;">
+                                <td><strong>세금계</strong></td>
+                                <td class="amount"><strong id="totalTax">0원</strong></td>
+                            </tr>
+                            <tr style="background: #e8f5e9;">
+                                <td><strong>순소득</strong></td>
+                                <td class="amount"><strong id="netIncome">0원</strong></td>
+                            </tr>
+                            <tr>
+                                <td>공제합계</td>
+                                <td class="amount" id="deductions">0원</td>
+                            </tr>
+                            <tr style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                                <td><strong>차인지급액</strong></td>
+                                <td class="amount" style="color: white;"><strong id="finalPaymentDetail">0원</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="monthly-comparison">
+                        <h3 style="color: #667eea; margin-bottom: 15px;">📅 월별 비교</h3>
+                        <div class="comparison-grid" id="monthlyComparison">
+                            <!-- 월별 비교 데이터가 여기에 표시됨 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- HWP 문서 -->
+        <div style="padding: 30px; background: white;">
+            <h2 style="color: #667eea; margin-bottom: 20px;">📄 HWP 복붙용 문서</h2>
+            <div class="hwp-document" id="hwpDocument">
+            (계약을 추가하면 여기에 표시됩니다)
+            </div>
+            <button class="copy-btn" onclick="copyHwpDocument()">📋 복사하기</button>
+        </div>
+
+        <!-- 푸터 -->
+        <div class="footer">
+            <p>© 2025 양종혁 설계사 | 삼성생명 강남법인지역단 관훈법인지점</p>
+            <p style="margin-top: 10px; font-size: 11px;">정기지급일 前 조회내용은 가정산 기준으로, 실제 최종 지급액과 다소 차이가 있을 수 있습니다.</p>
+        </div>
+    </div>
+
+    <script>
+        // 실제 계약 데이터 (2025년 8~10월)
+        const actualContracts = [
+            {
+                id: 1,
+                month: 8,
+                quarter: 1,
+                product: '삼성 The퍼스트건강보험(2508)',
+                cert_no: '00041000020469059',
+                subscription_date: '2025-08-14',
+                monthly_premium: 381484,
+                customer: '(고객1)',
+                conversion_merit: 511634,
+                product_type: '건강상해',
+                is_actual: true
+            },
+            {
+                id: 2,
+                month: 9,
+                quarter: 2,
+                product: '삼성 The퍼스트건강보험(2508)',
+                cert_no: '00041000020644163',
+                subscription_date: '2025-09-03',
+                monthly_premium: 225677,
+                customer: '양홍암',
+                conversion_merit: 301107,
+                product_type: '건강상해',
+                is_actual: true
+            },
+            {
+                id: 3,
+                month: 10,
+                quarter: 3,
+                product: '삼성 간편 웰에이징(2505)',
+                cert_no: '00041000021045492',
+                subscription_date: '2025-10-30',
+                monthly_premium: 25283,
+                customer: '홍수연',
+                conversion_merit: 33492,
+                product_type: '건강상해',
+                is_actual: true
+            },
+            {
+                id: 4,
+                month: 10,
+                quarter: 3,
+                product: '삼성 경증간편 플러스원(2510)',
+                cert_no: '00041000021046262',
+                subscription_date: '2025-10-30',
+                monthly_premium: 38426,
+                customer: '홍수연',
+                conversion_merit: 49953,
+                product_type: '건강상해',
+                is_actual: true
+            },
+            {
+                id: 5,
+                month: 10,
+                quarter: 3,
+                product: '삼성 더행복종신보험(2501)',
+                cert_no: '00041000021062068',
+                subscription_date: '2025-10-31',
+                monthly_premium: 216640,
+                customer: '김영기',
+                conversion_merit: 86656,
+                product_type: '종신/GI',
+                is_actual: true
+            },
+            {
+                id: 6,
+                month: 10,
+                quarter: 3,
+                product: '삼성 플러스원 건강보험(2510)',
+                cert_no: '00041000021060455',
+                subscription_date: '2025-10-31',
+                monthly_premium: 101440,
+                customer: '김규민',
+                conversion_merit: 131522,
+                product_type: '건강상해',
+                is_actual: true
+            }
+        ];
+
+        let contracts = [...actualContracts];
+        let nextId = 7;
+
+        // 페이지 로드 시 초기화
+        window.onload = function() {
+            displayContracts();
+            calculateCommission();
+            updateMonthInfo();
+        };
+
+        // 계약 추가
+        function addContract() {
+            const product = document.getElementById('productSelect').value;
+            const certNo = document.getElementById('certNo').value;
+            const subscriptionDate = document.getElementById('subscriptionDate').value;
+            const customer = document.getElementById('customer').value;
+            const monthlyPremium = parseInt(document.getElementById('monthlyPremium').value) || 0;
+            const conversionMerit = parseInt(document.getElementById('conversionMerit').value) || 0;
+            const productType = document.getElementById('productType').value;
+            const month = parseInt(document.getElementById('month').value);
+            const quarter = parseInt(document.getElementById('quarter').value);
+
+            if (!product || !customer || conversionMerit === 0) {
+                alert('필수 항목(상품명, 계약자, 환산성적)을 입력해주세요.');
+                return;
+            }
+
+            contracts.push({
+                id: nextId++,
+                month: month,
+                quarter: quarter,
+                product: product,
+                cert_no: certNo,
+                subscription_date: subscriptionDate,
+                monthly_premium: monthlyPremium,
+                customer: customer,
+                conversion_merit: conversionMerit,
+                product_type: productType,
+                is_actual: false
+            });
+
+            clearForm();
+            displayContracts();
+            calculateCommission();
+        }
+
+        // 계약 삭제
+        function deleteContract(id) {
+            contracts = contracts.filter(c => c.id !== id);
+            displayContracts();
+            calculateCommission();
+        }
+
+        // 계약 목록 표시
+        function displayContracts() {
+            const month = parseInt(document.getElementById('month').value);
+            const filtered = contracts.filter(c => c.month === month);
+
+            const html = filtered.map(contract => `
+                <div class="contract-item">
+                    <div class="contract-info">
+                        <div class="contract-title">
+                            ${contract.product}
+                            ${contract.is_actual ? '<span class="badge badge-' + contract.month + '">기존</span>' : '<span class="badge" style="background: #fff3cd; color: #856404;">신규</span>'}
+                        </div>
+                        <div class="contract-meta">
+                            ${contract.customer} | ${contract.subscription_date} | ${contract.product_type}
+                        </div>
+                    </div>
+                    <div class="contract-merit">${contract.conversion_merit.toLocaleString()}원</div>
+                    ${!contract.is_actual ? `<button class="btn-danger" onclick="deleteContract(${contract.id})">삭제</button>` : ''}
+                </div>
+            `).join('');
+
+            document.getElementById('contractsList').innerHTML = html || '<div style="padding: 20px; text-align: center; color: #999;">해당 월의 신계약이 없습니다.</div>';
+        }
+
+        // 수수료 계산
+        function calculateCommission() {
+            const month = parseInt(document.getElementById('month').value);
+            const filtered = contracts.filter(c => c.month === month);
+
+            const totalMerit = filtered.reduce((sum, c) => sum + c.conversion_merit, 0);
+            const basicCommission = totalMerit * 2;
+            const settlementFee = 1500000;
+            const maintenanceBonus = 400000;
+            const newbieTotal = settlementFee + maintenanceBonus;
+            const subtotal = basicCommission + newbieTotal;
+            const incomeTax = Math.floor(subtotal * 0.09);
+            const localTax = Math.floor(subtotal * 0.01);
+            const totalTax = incomeTax + localTax;
+            const netIncome = subtotal - totalTax;
+
+            let deductions = 0;
+            if (month === 8) deductions = 396070;
+            else if (month === 9) deductions = 1780;
+            else if (month === 10) deductions = 34830;
+
+            const finalPayment = netIncome - deductions;
+
+            // 결과 표시
+            document.getElementById('totalMerit').textContent = totalMerit.toLocaleString() + '원';
+            document.getElementById('totalCommission').textContent = subtotal.toLocaleString() + '원';
+            document.getElementById('finalPayment').textContent = finalPayment.toLocaleString() + '원';
+
+            document.getElementById('basicCommission').textContent = basicCommission.toLocaleString() + '원';
+            document.getElementById('settlementFee').textContent = settlementFee.toLocaleString() + '원';
+            document.getElementById('maintenanceBonus').textContent = maintenanceBonus.toLocaleString() + '원';
+            document.getElementById('newbieTotal').textContent = newbieTotal.toLocaleString() + '원';
+            document.getElementById('subtotal').textContent = subtotal.toLocaleString() + '원';
+            document.getElementById('incomeTax').textContent = incomeTax.toLocaleString() + '원';
+            document.getElementById('localTax').textContent = localTax.toLocaleString() + '원';
+            document.getElementById('totalTax').textContent = totalTax.toLocaleString() + '원';
+            document.getElementById('netIncome').textContent = netIncome.toLocaleString() + '원';
+            document.getElementById('deductions').textContent = deductions.toLocaleString() + '원';
+            document.getElementById('finalPaymentDetail').textContent = finalPayment.toLocaleString() + '원';
+
+            // 월별 비교
+            updateMonthlyComparison();
+
+            // HWP 문서 생성
+            generateHwpDocument(filtered, month);
+        }
+
+        // 월별 비교
+        function updateMonthlyComparison() {
+            const months = [8, 9, 10, 11];
+            const data = months.map(m => {
+                const filtered = contracts.filter(c => c.month === m);
+                const merit = filtered.reduce((sum, c) => sum + c.conversion_merit, 0);
+                const commission = (merit * 2) + 1900000;
+                return { month: m, commission: commission };
+            });
+
+            const html = data.map(d => `
+                <div class="comparison-card">
+                    <div class="comparison-month">${d.month}월</div>
+                    <div class="comparison-value">${d.commission.toLocaleString()}원</div>
+                </div>
+            `).join('');
+
+            document.getElementById('monthlyComparison').innerHTML = html;
+        }
+
+        // HWP 문서 생성
+        function generateHwpDocument(filtered, month) {
+            const quarter = parseInt(document.getElementById('quarter').value);
+            const quarterText = ['1차월', '2차월', '3차월', '4차월'][quarter - 1];
+            const totalMerit = filtered.reduce((sum, c) => sum + c.conversion_merit, 0);
+
+            let doc = `■ 2025년 ${month}월 수수료·실적 정리 (${quarterText})
+
+1. 기본 정보
+① 성명: 양종혁
+② 소속: 강남법인지역단 관훈법인지점 01팀
+③ 활동월: 2025-${String(month).padStart(2, '0')}
+④ 차월: ${quarterText}
+
+2. 활동 및 성적
+① 유효성적1: ${totalMerit.toLocaleString()}원
+② 유효성적2: ${totalMerit.toLocaleString()}원
+③ 2~13회 적용 유지율: 999
+④ 14~25회 적용 유지율: 999
+⑤ 당월 절대건수: ${filtered.length}건
+⑥ 당월 해지건수: 0건
+⑦ 기초활동 달성여부: 달성(1)
+
+3. 신계약 및 상품 정보
+`;
+            filtered.forEach((contract, index) => {
+                const letter = String.fromCharCode(65 + index);
+                doc += `
+${letter}. ${contract.product}
+  - 증권번호: ${contract.cert_no}
+  - 계약자: ${contract.customer}
+  - 청약일자: ${contract.subscription_date}
+  - 상품구분: ${contract.product_type}
+  - 월초보험료: ${contract.monthly_premium.toLocaleString()}원
+  - 환산성적: ${contract.conversion_merit.toLocaleString()}원
+`;
+            });
+
+            const basicCommission = totalMerit * 2;
+            const subtotal = basicCommission + 1900000;
+            const incomeTax = Math.floor(subtotal * 0.09);
+            const localTax = Math.floor(subtotal * 0.01);
+            const totalTax = incomeTax + localTax;
+            const netIncome = subtotal - totalTax;
+
+            let deductions = 0;
+            if (month === 8) deductions = 396070;
+            else if (month === 9) deductions = 1780;
+            else if (month === 10) deductions = 34830;
+
+            const finalPayment = netIncome - deductions;
+
+            doc += `
+4. 수수료 세부내역
+① 기본수수료 계: ${basicCommission.toLocaleString()}원
+  - 신계약수수료 초회분: ${basicCommission.toLocaleString()}원
+
+② 신인수수료 계: 1,900,000원
+  - 정착수수료: 1,500,000원
+  - 신인유지보너스: 400,000원
+
+③ 조직수수료·활동지원·기타수수료: 각 0원
+
+5. 세금 및 공제 내역
+① 과세표준액: ${subtotal.toLocaleString()}원
+② 금월수수료計: ${subtotal.toLocaleString()}원
+
+③ 세금 합계: ${totalTax.toLocaleString()}원
+  - 소득세: ${incomeTax.toLocaleString()}원
+  - 지방소득세: ${localTax.toLocaleString()}원
+
+④ 공제합계: ${deductions.toLocaleString()}원
+
+6. 최종 소득
+① 순소득: ${netIncome.toLocaleString()}원
+② 차인지급액(실제 수령액): ${finalPayment.toLocaleString()}원`;
+
+            document.getElementById('hwpDocument').textContent = doc;
+        }
+
+        // 초기화
+        function clearForm() {
+            document.getElementById('productSelect').value = '';
+            document.getElementById('certNo').value = '';
+            document.getElementById('subscriptionDate').value = '';
+            document.getElementById('customer').value = '';
+            document.getElementById('monthlyPremium').value = '';
+            document.getElementById('conversionMerit').value = '';
+            document.getElementById('productType').value = '건강상해';
+        }
+
+        // 복사
+        function copyHwpDocument() {
+            const doc = document.getElementById('hwpDocument').textContent;
+            navigator.clipboard.writeText(doc).then(() => {
+                alert('HWP 문서가 복사되었습니다!\n한글에 붙여넣기(Ctrl+V)하세요.');
+            });
+        }
+
+        // 월 변경 시
+        function updateMonthInfo() {
+            displayContracts();
+            calculateCommission();
+        }
+    </script>
+</body>
+</html>
